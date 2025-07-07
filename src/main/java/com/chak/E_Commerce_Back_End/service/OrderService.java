@@ -25,7 +25,7 @@ public class OrderService {
 
     @Autowired
     private ProductService productService;
-
+//place an order
     public Order placeOrder(OrderDTO orderDTO)
     {
         System.out.println(orderDTO);
