@@ -2,8 +2,9 @@ package com.chak.E_Commerce_Back_End.model;
 
 import jakarta.persistence.*;
 
-@Entity
+import java.util.List;
 
+@Entity
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -11,6 +12,9 @@ public class Product {
     private String name;
     private double price;
     private String imagePath;
+
+    @OneToMany(mappedBy = "product")
+    private List<OrderItem> orderItems;
 
     @ManyToOne
     @JoinColumn(name = "product_category_pro_cat_id", nullable = false)

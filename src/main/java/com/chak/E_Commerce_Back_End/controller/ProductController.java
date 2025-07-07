@@ -17,12 +17,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/auth/products")
+@RequestMapping("/products")
 public class ProductController {
 @Autowired
 private ProductService productService;
@@ -79,6 +81,23 @@ private ProductCategoryService productCategoryService;
         return productService.getPaginatedProducts(page, size, categoryId);
     }
 
+    @PutMapping("edit/{id}")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Long id,
+            @RequestParam String name,
+            @RequestParam Double price,
+            @RequestParam(required = false) MultipartFile image,
+            @RequestParam(required = false) Integer categoryId
+    ) throws IOException {
+        return ResponseEntity.ok(
+                productService.editProduct(id, name, price, image, categoryId));
+    }
+
+    @GetMapping("product/{proName}")
+    public ResponseEntity<Product> getProductByName(@PathVariable String proName)
+    {
+       return ResponseEntity.ok(productService.getProductByName(proName));
+    }
 
     }
 

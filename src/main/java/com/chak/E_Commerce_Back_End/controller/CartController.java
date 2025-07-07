@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping("/cart")
 public class CartController {
 
 

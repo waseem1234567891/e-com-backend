@@ -23,8 +23,10 @@ public class ProductCategoryService {
         return productCategoryRepo.findAll();
     }
 
-    public ProductCategory createCategory(ProductCategory productCategory) {
-       return productCategoryRepo.save(productCategory);
+    public ProductCategory createCategory(String productCategoryName) {
+        ProductCategory productCategory1=new ProductCategory();
+        productCategory1.setProCatName(productCategoryName);
+       return productCategoryRepo.save(productCategory1);
     }
 
     public Optional<ProductCategory> getCateById(Integer proCatId) {

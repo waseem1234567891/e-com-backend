@@ -1,7 +1,10 @@
 package com.chak.E_Commerce_Back_End.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Data
@@ -15,6 +18,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String status = "ACTIVE";
+
     @Column(nullable = false, unique = true)
     private String username;
 
@@ -25,7 +31,11 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String role = "USER";
+    private String role;
+
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Order> orders;
 
     public void setId(Long id) {
         this.id = id;
@@ -65,5 +75,21 @@ public class User {
 
     public String getRole() {
         return role;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<Order> orders) {
+        this.orders = orders;
     }
 }

@@ -1,6 +1,11 @@
 package com.chak.E_Commerce_Back_End.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
 public class CartItem {
+    @Id
     private Long productId;
     private String productName;
     private String productImage;

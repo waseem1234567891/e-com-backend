@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/category")
+@RequestMapping("/category")
 public class ProductCategoryController {
 
     @Autowired
@@ -24,9 +24,9 @@ public class ProductCategoryController {
     }
 
     @PostMapping("/add")
-    public ProductCategory addProductCategory(@RequestBody ProductCategory productCategory)
+    public ProductCategory addProductCategory(@RequestBody String productCategoryName)
     {
-      return   productCategoryService.createCategory(productCategory);
+      return   productCategoryService.createCategory(productCategoryName);
     }
     @GetMapping("/getbyid/{procatId}")
     public ProductCategory getProCatId(Integer proCatId)
