@@ -5,6 +5,7 @@ import com.chak.E_Commerce_Back_End.dto.LoginDTO;
 import com.chak.E_Commerce_Back_End.dto.UserDTO;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
+import com.chak.E_Commerce_Back_End.service.ConfirmationTokenService;
 import com.chak.E_Commerce_Back_End.service.CustomUserDetailsService;
 import com.chak.E_Commerce_Back_End.service.UserService;
 import com.chak.E_Commerce_Back_End.util.JwtUtil;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,16 +46,20 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ConfirmationTokenService tokenService;
+
     // User Registration
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestBody UserDTO user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        //user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole("USER");
-        userRepository.save(user);
+       // userRepository.save(user);
+        userService.registerUser(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
@@ -117,60 +123,18 @@ public class UserController {
 
 
 // user dashboard
-        @GetMapping("/dashboard")
-        public ResponseEntity<?> userDashboard(@RequestHeader("Authorization")String authHeader) {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-            }
-
-            String token = authHeader.substring(7);
-
-            try {
-                String username = jwtUtil.extractUsername(token);
-                String role = jwtUtil.extractRole(token);
-                boolean isValid = jwtUtil.isTokenValid(token, username);
-                if (isValid&&role.equals("USER")) {
-                    return ResponseEntity.ok("Token is valid for user: " + username + " (Role: " + role + ")");
-                } else {
-                    return ResponseEntity.status(401).body("Token is invalid or expired");
-                }
-            } catch (Exception e) {
-                return ResponseEntity.status(401).body("Invalid token");
-            }
-
-
-
-
-
-
-        }
+@GetMapping("/dashboard")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<?> userDashboard(Authentication authentication) {
+    return ResponseEntity.ok("Welcome User: " + authentication.getName());
+}
 
         //admin dashboard
 
     @GetMapping("/admindashboard")
-    public ResponseEntity<?> adminDashboard(@RequestHeader("Authorization")String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-        }
-
-        String token = authHeader.substring(7);
-
-        try {
-            String username = jwtUtil.extractUsername(token);
-            String role = jwtUtil.extractRole(token);
-            if(role.equals("ADMIN")) {
-                boolean isValid = jwtUtil.isTokenValid(token, username);
-                if (isValid) {
-                    return ResponseEntity.ok("Token is valid for user: " + username + " (Role: " + role + ")");
-                } else {
-                    return ResponseEntity.status(401).body("Token is invalid or expired");
-                }
-            }else {
-                return ResponseEntity.status(401).body("Token is invalid or expired");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid token");
-        }
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminDashboard(Authentication authentication) {
+        return ResponseEntity.ok("Welcome Admin: " + authentication.getName());
     }
 
 @GetMapping("/allusers")
@@ -178,5 +142,38 @@ public class UserController {
 {
     return userService.getAllRegisterUsers();
 }
+
+@DeleteMapping("user/{userId}")
+@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deleteUser(@PathVariable Long userId)
+{
+    try {
+        userService.deleteUser(userId);
+    }catch (Exception ex)
+    {
+        return ResponseEntity.badRequest().body("User is not exist");
+    }
+    return ResponseEntity.ok("User deleted successfully.");
+}
+
+    @PatchMapping("user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> editUser(@PathVariable Long userId,@RequestBody UserDTO userDTO)
+    {
+        try {
+            userService.editUser(userId,userDTO);
+        }catch (Exception ex)
+        {
+            return ResponseEntity.badRequest().body("User is not exist");
+        }
+        return ResponseEntity.ok("User update successfully.");
+    }
+
+
+    @GetMapping("/confirm")
+    public ResponseEntity<String> confirmEmail(@RequestParam("token") String token) {
+        String result = tokenService.confirmToken(token);
+        return ResponseEntity.ok(result);
+    }
 
 }

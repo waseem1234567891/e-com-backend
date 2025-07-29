@@ -35,5 +35,12 @@ private OrderService orderService;
         Order order=orderService.updateOrderStatus(id,newStatus);
         return ResponseEntity.ok("Order status updated");
     }
+    //getting orders for a user
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getOrdersByUserId(@PathVariable Long userId)
+    {
+        List<Order> orderByUserId = orderService.getOrderByUserId(userId);
+        return ResponseEntity.ok(orderByUserId);
+    }
 
 }

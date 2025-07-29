@@ -61,4 +61,11 @@ public class OrderService {
     return orderRepo.save(order);
     }
 
+
+    //get a user order
+    public List<Order> getOrderByUserId(Long userId)
+    {
+      return   orderRepo.findByUser_Id(userId);
+    }
+
 }
