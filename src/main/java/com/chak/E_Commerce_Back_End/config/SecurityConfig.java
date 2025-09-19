@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(withDefaults()) // 👈 enable CORS with the config source above
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/products/**", "/category/**", "/cart/**", "/uploads/**").permitAll()
+                        .requestMatchers("/auth/**", "/products/**", "/category/**", "/cart/**", "/uploads/**","/orders/addorder").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

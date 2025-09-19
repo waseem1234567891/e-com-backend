@@ -1,54 +1,49 @@
 package com.chak.E_Commerce_Back_End.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class CartItem {
     @Id
-    private Long productId;
-    private String productName;
-    private String productImage;
-    private Double productPrice;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @ManyToOne
+    private Product product;
     private int quantity;
+    @ManyToOne
+    private User user;
 
-    public void setProductPrice(Double productPrice) {
-        this.productPrice = productPrice;
+    public Long getId() {
+        return id;
     }
 
-    public Double getProductPrice() {
-        return productPrice;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+
+
+    public Product getProduct() {
+        return product;
     }
 
-    public void setProductImage(String productImage) {
-        this.productImage = productImage;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public String getProductImage() {
-        return productImage;
-    }
-
-    public Long getProductId() {
-        return productId;
+    public void setProduct(Product product) {
+        this.product = product;
     }
 
     public int getQuantity() {
         return quantity;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

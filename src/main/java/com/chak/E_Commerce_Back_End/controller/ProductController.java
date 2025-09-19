@@ -54,6 +54,7 @@ private ProductCategoryService productCategoryService;
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    //Get all Products using pagibation
     @RequestMapping("/allproducts")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Page<ProductDTO>> getAllProductsPaginated(
@@ -65,6 +66,8 @@ private ProductCategoryService productCategoryService;
         Page<ProductDTO> productDTOPage = productPage.map(ProductDTO::new);
         return ResponseEntity.ok(productDTOPage);
     }
+
+    //Delete a product by Product id
     @DeleteMapping("/delete/{productId}")
     public ResponseEntity<Void> deleteProductUsingId(@PathVariable Long productId)
     {
@@ -80,7 +83,7 @@ private ProductCategoryService productCategoryService;
     ) {
         return productService.getPaginatedProducts(page, size, categoryId);
     }
-
+//Edit product by product id
     @PutMapping("edit/{id}")
     public ResponseEntity<Product> updateProduct(
             @PathVariable Long id,
@@ -92,12 +95,22 @@ private ProductCategoryService productCategoryService;
         return ResponseEntity.ok(
                 productService.editProduct(id, name, price, image, categoryId));
     }
-
+   //Get product by product name
     @GetMapping("product/{proName}")
     public ResponseEntity<Product> getProductByName(@PathVariable String proName)
     {
        return ResponseEntity.ok(productService.getProductByName(proName));
     }
+
+    //Get product by product id
+    @GetMapping("/{productId}")
+    public ResponseEntity<?> getProductByProductId(@PathVariable Long productId)
+    {
+        Product product = productService.getProductbyId(productId);
+        return ResponseEntity.ok(product);
+    }
+
+
 
     }
 

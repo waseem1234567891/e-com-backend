@@ -1,15 +1,30 @@
-package com.chak.E_Commerce_Back_End.dto;
-
-import com.chak.E_Commerce_Back_End.model.OrderItem;
+package com.chak.E_Commerce_Back_End.dto.order;
 
 import java.util.List;
 
 public class OrderDTO {
-
+    private String guestName;
+    private String guestEmail;
     private String shippingAddress; // combined string
     private String paymentMethod;
     private List<OrderItemDTO> items;
     private Double totalAmount; // optional if calculated in backend
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public void setGuestName(String guestName) {
+        this.guestName = guestName;
+    }
+
+    public String getGuestEmail() {
+        return guestEmail;
+    }
+
+    public void setGuestEmail(String guestEmail) {
+        this.guestEmail = guestEmail;
+    }
 
     public List<OrderItemDTO> getItems() {
         return items;
