@@ -1,22 +1,27 @@
 package com.chak.E_Commerce_Back_End.controller;
 
-import com.chak.E_Commerce_Back_End.dto.AuthResponse;
-import com.chak.E_Commerce_Back_End.dto.LoginDTO;
-import com.chak.E_Commerce_Back_End.dto.UserDTO;
+import com.chak.E_Commerce_Back_End.dto.auth.*;
+import com.chak.E_Commerce_Back_End.dto.user.DashboardResponse;
+import com.chak.E_Commerce_Back_End.dto.auth.UserDTO;
+import com.chak.E_Commerce_Back_End.dto.user.UserResponseDto;
+import com.chak.E_Commerce_Back_End.dto.user.UserUpdateDto;
+import com.chak.E_Commerce_Back_End.exception.UserAlreadyExistsException;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
+import com.chak.E_Commerce_Back_End.service.ConfirmationTokenService;
 import com.chak.E_Commerce_Back_End.service.CustomUserDetailsService;
+import com.chak.E_Commerce_Back_End.service.DashboardService;
 import com.chak.E_Commerce_Back_End.service.UserService;
 import com.chak.E_Commerce_Back_End.util.JwtUtil;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,16 +49,26 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ConfirmationTokenService tokenService;
+
+    @Autowired
+    private DashboardService dashboardService;
+
     // User Registration
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@Valid @RequestBody UserDTO user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username already exists");
+            throw new UserAlreadyExistsException("Username already exists: " + user.getUsername());
+        }
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new UserAlreadyExistsException("Email already registered: " + user.getEmail());
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        //user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole("USER");
-        userRepository.save(user);
+       // userRepository.save(user);
+        userService.registerUser(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
@@ -72,15 +87,16 @@ public class UserController {
 
     //user login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
             User user = userService.loginUser(request);
-            if (user.getRole().equals("USER")) {
-                String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+            if (user.getRole().equals("USER")&&user.getStatus().equals("ACTIVE")) {
+
+                String token = jwtUtil.generateToken(user.getUsername(), user.getRole(),user.getId());
 
                 return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername()));
             }
@@ -95,7 +111,7 @@ public class UserController {
 
     //admin loggin
     @PostMapping("/adminlogin")
-    public ResponseEntity<?> adminLogin(@RequestBody LoginDTO request) {
+    public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginDTO request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -103,7 +119,7 @@ public class UserController {
 
             User user = userService.loginUser(request);
             if (user.getRole().equals("ADMIN")) {
-                String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+                String token = jwtUtil.generateToken(user.getUsername(), user.getRole(),user.getId());
 
                 return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername()));
             }else {
@@ -117,66 +133,94 @@ public class UserController {
 
 
 // user dashboard
-        @GetMapping("/dashboard")
-        public ResponseEntity<?> userDashboard(@RequestHeader("Authorization")String authHeader) {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-            }
+@GetMapping("/dashboard")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<?> userDashboard(Authentication authentication) {
 
-            String token = authHeader.substring(7);
-
-            try {
-                String username = jwtUtil.extractUsername(token);
-                String role = jwtUtil.extractRole(token);
-                boolean isValid = jwtUtil.isTokenValid(token, username);
-                if (isValid&&role.equals("USER")) {
-                    return ResponseEntity.ok("Token is valid for user: " + username + " (Role: " + role + ")");
-                } else {
-                    return ResponseEntity.status(401).body("Token is invalid or expired");
-                }
-            } catch (Exception e) {
-                return ResponseEntity.status(401).body("Invalid token");
-            }
-
-
-
-
-
-
-        }
+    DashboardResponse dashboard = dashboardService.getDashboard(authentication.getName());
+    return ResponseEntity.ok(dashboard);
+}
 
         //admin dashboard
 
     @GetMapping("/admindashboard")
-    public ResponseEntity<?> adminDashboard(@RequestHeader("Authorization")String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-        }
-
-        String token = authHeader.substring(7);
-
-        try {
-            String username = jwtUtil.extractUsername(token);
-            String role = jwtUtil.extractRole(token);
-            if(role.equals("ADMIN")) {
-                boolean isValid = jwtUtil.isTokenValid(token, username);
-                if (isValid) {
-                    return ResponseEntity.ok("Token is valid for user: " + username + " (Role: " + role + ")");
-                } else {
-                    return ResponseEntity.status(401).body("Token is invalid or expired");
-                }
-            }else {
-                return ResponseEntity.status(401).body("Token is invalid or expired");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid token");
-        }
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminDashboard(Authentication authentication) {
+        return ResponseEntity.ok("Welcome Admin: " + authentication.getName());
     }
 
+
 @GetMapping("/allusers")
-    public List<User> getAllUsers()
+@PreAuthorize("hasRole('ADMIN')")
+    public List<UserResponseDto> getAllUsers()
 {
     return userService.getAllRegisterUsers();
 }
+
+@DeleteMapping("user/{userId}")
+@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deleteUser(@PathVariable Long userId)
+{
+    try {
+        userService.deleteUser(userId);
+    }catch (Exception ex)
+    {
+        return ResponseEntity.badRequest().body("User is not exist");
+    }
+    return ResponseEntity.ok("User deleted successfully.");
+}
+
+    @PatchMapping("user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> editUser(@PathVariable Long userId,@RequestBody UserUpdateDto userDTO)
+    {
+        try {
+            userService.editUser(userId,userDTO);
+        }catch (Exception ex)
+        {
+            return ResponseEntity.badRequest().body("User is not exist");
+        }
+        return ResponseEntity.ok("User update successfully.");
+    }
+
+
+    @GetMapping("/confirm")
+    public ResponseEntity<String> confirmEmail(@RequestParam("token") String token) {
+        String result = tokenService.confirmToken(token);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/updateprofile/{userId}")
+
+    public ResponseEntity<User> updateProfile(@PathVariable Long userId, @RequestBody ProfileDto profileDto)
+    {
+
+        User user1 = userService.updateProfile(userId,profileDto);
+        return ResponseEntity.ok(user1);
+    }
+
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        userService.initiatePasswordReset(request.getEmail());
+        return ResponseEntity.ok("If that email exists, a reset link was sent.");
+    }
+
+    @GetMapping("/forgot-password")
+    public ResponseEntity<?> validateResetToken(@RequestParam("token") String token)
+    {
+        return userService.validateToken(token);
+    }
+
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        String token = request.getToken();
+        String newPassword = request.getNewPassword();
+       return userService.resetPassword(token,newPassword);
+    }
+
+
+
 
 }

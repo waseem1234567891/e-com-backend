@@ -1,6 +1,7 @@
 package com.chak.E_Commerce_Back_End.service;
 
 import com.chak.E_Commerce_Back_End.dto.ProductDTO;
+import com.chak.E_Commerce_Back_End.exception.ProductNotFoundException;
 import com.chak.E_Commerce_Back_End.model.Product;
 import com.chak.E_Commerce_Back_End.model.ProductCategory;
 import com.chak.E_Commerce_Back_End.repository.ProductRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -21,18 +23,20 @@ public class ProductService {
     private FileStorageService fileStorageService;
     @Autowired
     private ProductCategoryService productCategoryService;
-// add new product
+// Add new product
     public Product addProduct(Product product)
     {
-       return productRepository.save(product);
-    }
 
+        return productRepository.save(product);
+    }
+   // Get All Products Using Pagination
     public Page<Product> findAllProducts(Pageable pageable) {
 
         return productRepository.findAll(pageable);
     }
-
+// Delete a Product by product id
     public void deleteProduct(Long id) {
+
         productRepository.deleteById(id);
     }
     //update product
@@ -68,12 +72,24 @@ public class ProductService {
 
     public Product getProductByName(String productName)
     {
-        return productRepository.findByName(productName);
+        Optional<Product> productOpt = productRepository.findByName(productName);
+        if(productOpt.isPresent())
+        {
+            return productOpt.get();
+        }else {
+            throw new ProductNotFoundException("Product not found with Name "+productName);
+        }
     }
 
     public Product getProductbyId(Long productId)
     {
-        return productRepository.findById(productId).get();
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isPresent())
+        {
+            return productOpt.get();
+        }else {
+            throw new ProductNotFoundException("Product not Found for id "+productId);
+        }
     }
 
 }
