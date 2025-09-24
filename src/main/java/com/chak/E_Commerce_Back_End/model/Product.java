@@ -26,6 +26,9 @@ public class Product {
     @Column(name = "tag")
     private List<String> tags = new ArrayList<>(); // NEW: tags for search
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
 
     public ProductCategory getProductCategory() {
         return productCategory;
@@ -93,5 +96,13 @@ public class Product {
 
     public void setOrderItems(List<OrderItem> orderItems) {
         this.orderItems = orderItems;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
     }
 }
