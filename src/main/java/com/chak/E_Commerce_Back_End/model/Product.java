@@ -2,6 +2,7 @@ package com.chak.E_Commerce_Back_End.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,6 +21,11 @@ public class Product {
     @JoinColumn(name = "product_category_pro_cat_id", nullable = false)
     private ProductCategory productCategory;
 
+    @ElementCollection
+    @CollectionTable(name = "product_tags", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "tag")
+    private List<String> tags = new ArrayList<>(); // NEW: tags for search
+
 
     public ProductCategory getProductCategory() {
         return productCategory;
@@ -32,6 +38,14 @@ public class Product {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 
     public Product() {
@@ -71,5 +85,13 @@ public class Product {
 
     public String getImagePath() {
         return imagePath;
+    }
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
     }
 }

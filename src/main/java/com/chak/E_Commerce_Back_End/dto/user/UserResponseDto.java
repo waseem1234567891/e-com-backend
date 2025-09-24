@@ -1,9 +1,6 @@
 package com.chak.E_Commerce_Back_End.dto.user;
 
-import com.chak.E_Commerce_Back_End.model.Address;
-import com.chak.E_Commerce_Back_End.model.CartItem;
-import com.chak.E_Commerce_Back_End.model.ConfirmationToken;
-import com.chak.E_Commerce_Back_End.model.Order;
+import com.chak.E_Commerce_Back_End.model.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
@@ -20,6 +17,17 @@ public class UserResponseDto {
     private String username;
     private String email;
     private String role;
+
+    public UserResponseDto() {
+    }
+
+    public UserResponseDto(User user) {
+        this.id=user.getId();
+        this.status=user.getStatus();
+        this.username=user.getUsername();
+        this.email=user.getEmail();
+        this.role=user.getRole();
+    }
 
     public Long getId() {
         return id;
