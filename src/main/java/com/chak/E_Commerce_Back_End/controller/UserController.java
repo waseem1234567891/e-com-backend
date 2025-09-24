@@ -14,7 +14,9 @@ import com.chak.E_Commerce_Back_End.service.DashboardService;
 import com.chak.E_Commerce_Back_End.service.UserService;
 import com.chak.E_Commerce_Back_End.util.JwtUtil;
 import jakarta.validation.Valid;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -154,8 +156,19 @@ public ResponseEntity<?> userDashboard(Authentication authentication) {
 @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponseDto> getAllUsers()
 {
+
     return userService.getAllRegisterUsers();
 }
+//Get Users By Pagination
+
+@GetMapping("/alluser")
+@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserResponseDto>> getAllUserThroughPagination(@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue = "5")int size)
+{
+return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size));
+}
+
+
 
 @DeleteMapping("user/{userId}")
 @PreAuthorize("hasRole('ADMIN')")

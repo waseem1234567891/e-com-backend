@@ -2,6 +2,8 @@ package com.chak.E_Commerce_Back_End.dto;
 
 import com.chak.E_Commerce_Back_End.model.Product;
 
+import java.util.List;
+
 public class ProductDTO {
 
         private Long id;
@@ -9,6 +11,7 @@ public class ProductDTO {
         private Double price;
         private String imageUrl;
         private Integer proCatId;
+        private List<String> tags;
 
     public Integer getProCatId() {
         return proCatId;
@@ -50,11 +53,20 @@ public class ProductDTO {
         return imageUrl;
     }
 
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
     public ProductDTO(Product product) {
             this.id = product.getId();
             this.name = product.getName();
             this.price = product.getPrice();
             this.proCatId=product.getProductCategory().getProCatId();
             this.imageUrl = product.getImagePath();
+            this.tags=product.getTags();
         }
 }

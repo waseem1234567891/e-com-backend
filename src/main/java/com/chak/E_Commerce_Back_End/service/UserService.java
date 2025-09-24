@@ -12,6 +12,9 @@ import com.chak.E_Commerce_Back_End.repository.ConfirmationTokenRepository;
 import com.chak.E_Commerce_Back_End.repository.TokenRepository;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -119,6 +122,13 @@ public class UserService {
             return userResponseDto;
         }).collect(Collectors.toList());
         return collect;
+    }
+    //Getting All user By pagination
+
+    public Page<UserResponseDto> getAllUserUsingPagination(int page,int size)
+    {
+        Pageable pageable= PageRequest.of(page,size);
+        return userRepository.findAll(pageable).map(user -> new UserResponseDto(user));
     }
 
     public void deleteUser(Long userId)
