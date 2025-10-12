@@ -10,20 +10,20 @@ public class AddressDTO {
     private String state;
     private String postalCode;
     private String country;
-    private Long userId;
+
     private boolean primary;
 
     public AddressDTO() {
     }
 
-    public AddressDTO(Long id, String street, String city, String state, String postalCode, String country, Long userId) {
+    public AddressDTO(Long id, String street, String city, String state, String postalCode, String country) {
         this.id = id;
         this.street = street;
         this.city = city;
         this.state = state;
         this.postalCode = postalCode;
         this.country = country;
-        this.userId = userId;
+
     }
 
     public Long getId() {
@@ -74,13 +74,7 @@ public class AddressDTO {
         this.country = country;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
 
     public boolean isPrimary() {
         return primary;

@@ -1,8 +1,11 @@
-package com.chak.E_Commerce_Back_End.dto;
+package com.chak.E_Commerce_Back_End.dto.product;
 
+import com.chak.E_Commerce_Back_End.dto.review.ReviewDTO;
 import com.chak.E_Commerce_Back_End.model.Product;
+import com.chak.E_Commerce_Back_End.model.Review;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProductDTO {
 
@@ -12,6 +15,8 @@ public class ProductDTO {
         private String imageUrl;
         private Integer proCatId;
         private List<String> tags;
+        private int stock;
+        private List<ReviewDTO> reviewDTO;
 
     public Integer getProCatId() {
         return proCatId;
@@ -61,6 +66,22 @@ public class ProductDTO {
         this.tags = tags;
     }
 
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
+    public List<ReviewDTO> getReviewDTO() {
+        return reviewDTO;
+    }
+
+    public void setReviewDTO(List<ReviewDTO> reviewDTO) {
+        this.reviewDTO = reviewDTO;
+    }
+
     public ProductDTO(Product product) {
             this.id = product.getId();
             this.name = product.getName();
@@ -68,5 +89,10 @@ public class ProductDTO {
             this.proCatId=product.getProductCategory().getProCatId();
             this.imageUrl = product.getImagePath();
             this.tags=product.getTags();
+            this.stock=product.getStock();
+            List<Review> reviews = product.getReviews();
+        List<ReviewDTO> reviewDto = reviews.stream().map(ReviewDTO::new).collect(Collectors.toList());
+        this.reviewDTO=reviewDto;
         }
+
 }

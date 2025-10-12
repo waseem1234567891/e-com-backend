@@ -1,4 +1,4 @@
-package com.chak.E_Commerce_Back_End.dto;
+package com.chak.E_Commerce_Back_End.dto.order;
 
 public class StatusUpdateRequest {
     private String status;

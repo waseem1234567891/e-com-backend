@@ -1,6 +1,7 @@
 package com.chak.E_Commerce_Back_End.service;
 
-import com.chak.E_Commerce_Back_End.dto.ProductDTO;
+import com.chak.E_Commerce_Back_End.dto.product.ProductDTO;
+import com.chak.E_Commerce_Back_End.dto.product.ProductStockDto;
 import com.chak.E_Commerce_Back_End.exception.ProductNotFoundException;
 import com.chak.E_Commerce_Back_End.model.Product;
 import com.chak.E_Commerce_Back_End.model.ProductCategory;
@@ -42,11 +43,12 @@ public class ProductService {
         productRepository.deleteById(id);
     }
     //update product
-    public Product editProduct(Long id, String name, Double price, MultipartFile image, Integer categoryId, List<String> tags) throws IOException {
+    public Product editProduct(Long id, String name, Double price, MultipartFile image, Integer categoryId, List<String> tags,int stock) throws IOException {
         Product product1=productRepository.findById(id).get();
         product1.setName(name);
         product1.setPrice(price);
         product1.setTags(tags);
+        product1.setStock(stock);
         if(image!=null&&!image.isEmpty())
         {
             String imagePath=fileStorageService.saveFile(image);
@@ -117,4 +119,48 @@ public class ProductService {
         }
     }
 
+    public ProductDTO updateStock(Long productId, int stock) {
+        Optional<Product> productOpt=productRepository.findById(productId);
+        if (productOpt.isPresent())
+        {
+            Product product = productOpt.get();
+            product.setStock(stock);
+            productRepository.save(product);
+            return new ProductDTO(product);
+        }else {
+            throw new ProductNotFoundException("Product not found with id "+productId);
+        }
+    }
+    public ProductDTO addStock(Long productId, int stock) {
+        Optional<Product> productOpt=productRepository.findById(productId);
+        if (productOpt.isPresent())
+        {
+            Product product = productOpt.get();
+            int newStock= product.getStock()+stock;
+            product.setStock(newStock);
+            productRepository.save(product);
+            return new ProductDTO(product);
+        }else {
+            throw new ProductNotFoundException("Product not found with id "+productId);
+        }
+    }
+
+    public Integer getCurrentStockByProductId(Long productId) {
+       return productRepository.findStockByProductId(productId);
+    }
+
+    public List<ProductStockDto> getAllProductNameAndStock() {
+        return productRepository.findAllProductNameAndStock();
+    }
+
+    public ProductDTO getProductbyIdAsProductDto(Long productId) {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isPresent())
+        {
+            return new ProductDTO(productOpt.get());
+        }else {
+            throw new ProductNotFoundException("Product not Found for id "+productId);
+        }
+
+    }
 }

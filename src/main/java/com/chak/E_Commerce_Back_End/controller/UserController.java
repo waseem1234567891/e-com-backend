@@ -3,6 +3,7 @@ package com.chak.E_Commerce_Back_End.controller;
 import com.chak.E_Commerce_Back_End.dto.auth.*;
 import com.chak.E_Commerce_Back_End.dto.user.DashboardResponse;
 import com.chak.E_Commerce_Back_End.dto.auth.UserDTO;
+import com.chak.E_Commerce_Back_End.dto.user.EmailRequest;
 import com.chak.E_Commerce_Back_End.dto.user.UserResponseDto;
 import com.chak.E_Commerce_Back_End.dto.user.UserUpdateDto;
 import com.chak.E_Commerce_Back_End.exception.UserAlreadyExistsException;
@@ -14,6 +15,7 @@ import com.chak.E_Commerce_Back_End.service.DashboardService;
 import com.chak.E_Commerce_Back_End.service.UserService;
 import com.chak.E_Commerce_Back_End.util.JwtUtil;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -100,7 +102,7 @@ public class UserController {
 
                 String token = jwtUtil.generateToken(user.getUsername(), user.getRole(),user.getId());
 
-                return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername()));
+                return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername(),user.getRole()));
             }
             else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enter UserName and Password");
@@ -123,7 +125,7 @@ public class UserController {
             if (user.getRole().equals("ADMIN")) {
                 String token = jwtUtil.generateToken(user.getUsername(), user.getRole(),user.getId());
 
-                return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername()));
+                return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername(),user.getRole()));
             }else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please Enter Admin Username and Password");
             }
@@ -233,7 +235,17 @@ return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size));
        return userService.resetPassword(token,newPassword);
     }
 
+    @PostMapping("/forgot-username")
+    public ResponseEntity<?> sendForgetUserName(@RequestBody EmailRequest email)
+    {
+        userService.forgetUserName(email.getEmail());
+        return ResponseEntity.ok("User name has been sent to Your Registered Email Adress");
+    }
 
-
+    @GetMapping("/user/{userId}")
+    public User getUserDetails(@PathVariable Long userId)
+    {
+      return   userService.getUserByUserId(userId);
+    }
 
 }

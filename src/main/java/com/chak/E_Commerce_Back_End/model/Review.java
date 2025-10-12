@@ -25,6 +25,11 @@ public class Review {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(length = 1000)
+    private String reply;
+
+    private LocalDateTime replyDate;
+
     public Review() {
     }
 
@@ -35,6 +40,16 @@ public class Review {
         this.reviewDate = reviewDate;
         this.product = product;
         this.user = user;
+    }
+    public Review(Long id, int rating, String comment, LocalDateTime reviewDate, Product product, User user,String reply,LocalDateTime replyDate) {
+        this.id = id;
+        this.rating = rating;
+        this.comment = comment;
+        this.reviewDate = reviewDate;
+        this.product = product;
+        this.user = user;
+        this.reply=reply;
+        this.replyDate=replyDate;
     }
 
     public Long getId() {
@@ -83,5 +98,26 @@ public class Review {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getReply() {
+        return reply;
+    }
+
+    public void setReply(String reply) {
+        this.reply = reply;
+    }
+
+    public LocalDateTime getReplyDate() {
+        return replyDate;
+    }
+
+    public void setReplyDate(LocalDateTime replyDate) {
+        this.replyDate = replyDate;
+    }
+
+    public void replyToReview(String replyText) {
+        this.reply = replyText;
+        this.replyDate = LocalDateTime.now();
     }
 }

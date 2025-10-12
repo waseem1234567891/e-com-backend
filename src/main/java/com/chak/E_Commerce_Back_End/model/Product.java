@@ -13,6 +13,7 @@ public class Product {
     private String name;
     private double price;
     private String imagePath;
+    private int stock;
 
     @OneToMany(mappedBy = "product")
     private List<OrderItem> orderItems;
@@ -104,5 +105,13 @@ public class Product {
 
     public void setReviews(List<Review> reviews) {
         this.reviews = reviews;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
     }
 }

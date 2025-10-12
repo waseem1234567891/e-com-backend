@@ -77,4 +77,44 @@ public class GlobalExceptionHandler {
     {
         return buildErrorResponse(ex,HttpStatus.NOT_FOUND,request);
     }
+    // Not Enough Stock Exception Handler
+    @ExceptionHandler(NotEnoughStock.class)
+    public ResponseEntity<ErrorResponse> handleNotEnoughProduct(
+            NotEnoughStock ex,
+            WebRequest request
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+    //Order Already Canceled Exception
+    @ExceptionHandler(OrderAlreadyCancelled.class)
+    public ResponseEntity<ErrorResponse> handleOrderAlreadyCancelled(OrderAlreadyCancelled ex,WebRequest request)
+    {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+    @ExceptionHandler(ReviewNotFound.class)
+    public ResponseEntity<ErrorResponse> handleReviewNotFoundException(ReviewNotFound ex,WebRequest request)
+    {
+        ErrorResponse errorResponse = new ErrorResponse(
+        LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+      return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
+    }
 }
