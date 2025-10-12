@@ -1,8 +1,10 @@
 package com.chak.E_Commerce_Back_End.service;
 
+import com.chak.E_Commerce_Back_End.dto.order.OrderItemDTO;
 import com.chak.E_Commerce_Back_End.dto.order.OrderResponseDTO;
 import com.chak.E_Commerce_Back_End.dto.user.DashboardResponse;
 import com.chak.E_Commerce_Back_End.model.Order;
+import com.chak.E_Commerce_Back_End.model.OrderItem;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,10 @@ public class DashboardService {
             } else {
                 orderResponseDTO.setUserName(order.getGuestName());
             }
-            orderResponseDTO.setItems(order.getItems());
+            //mapping orderItems to OrderItemDto
+            List<OrderItem> items = order.getItems();
+            List<OrderItemDTO> collect1 = items.stream().map(OrderItemDTO::new).collect(Collectors.toList());
+            orderResponseDTO.setItems(collect1);
             orderResponseDTO.setShippingAddress(order.getShippingAddress());
             orderResponseDTO.setOrderDate(order.getOrderDate());
             orderResponseDTO.setTotalAmount(order.getTotalAmount());

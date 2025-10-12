@@ -40,7 +40,8 @@ public class CartController {
                         item.getProduct().getName(),
                         item.getProduct().getPrice(),
                         item.getQuantity(),
-                        item.getProduct().getImagePath()
+                        item.getProduct().getImagePath(),
+                        item.getProduct().getStock()
                 ))
                 .toList();
     }

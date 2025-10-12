@@ -7,14 +7,16 @@ public class CartResponseDto {
     private double productPrice;
     private int quantity;
     private String imagePath;
+    private int stock;
 
-    public CartResponseDto(Long cartItemId, Long productId, String productName, double productPrice, int quantity, String imagePath) {
+    public CartResponseDto(Long cartItemId, Long productId, String productName, double productPrice, int quantity, String imagePath,int stock) {
         this.cartItemId = cartItemId;
         this.productId = productId;
         this.productName = productName;
         this.productPrice = productPrice;
         this.quantity = quantity;
         this.imagePath = imagePath;
+        this.stock=stock;
     }
 
     public Long getCartItemId() {
@@ -63,5 +65,13 @@ public class CartResponseDto {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
     }
 }

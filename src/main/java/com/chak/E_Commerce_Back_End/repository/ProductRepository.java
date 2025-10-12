@@ -1,5 +1,6 @@
 package com.chak.E_Commerce_Back_End.repository;
 
+import com.chak.E_Commerce_Back_End.dto.product.ProductStockDto;
 import com.chak.E_Commerce_Back_End.model.Product;
 
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -30,4 +32,14 @@ public interface ProductRepository extends JpaRepository<Product,Long> {
     Page<Product> searchProducts(@Param("categoryId") Long categoryId,
                                  @Param("keyword") String keyword,
                                  Pageable pageable);
+
+    @Query("SELECT p.stock FROM Product p WHERE p.id = :productId")
+    Integer findStockByProductId(@Param("productId") Long productId);
+
+    @Query("SELECT new com.chak.E_Commerce_Back_End.dto.product.ProductStockDto(p.name, p.stock) FROM Product p")
+    List<ProductStockDto> findAllProductNameAndStock();
+
+    // ✅ Fetch products with stock less than threshold
+    @Query("SELECT p FROM Product p WHERE p.stock < :threshold ORDER BY p.stock ASC")
+    List<Product> findLowStockProducts(int threshold);
 }

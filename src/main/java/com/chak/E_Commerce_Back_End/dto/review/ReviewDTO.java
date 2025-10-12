@@ -13,6 +13,8 @@ public class ReviewDTO {
     private String productName;
     private Long userId;
     private String userName; // or email if you prefer
+    private String adminReply;
+    private LocalDateTime adminReplyDate;
 
     public ReviewDTO() {}
 
@@ -31,6 +33,15 @@ public class ReviewDTO {
         if(review.getUser() != null) {
             this.userId = review.getUser().getId();
             this.userName = review.getUser().getUsername(); // or getEmail()
+        }
+        if (review.getReply()!=null)
+        {
+            this.adminReply=review.getReply();
+
+        }
+        if (review.getReplyDate()!=null)
+        {
+            this.adminReplyDate=review.getReplyDate();
         }
     }
 
@@ -58,4 +69,20 @@ public class ReviewDTO {
 
     public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }
+
+    public String getAdminReply() {
+        return adminReply;
+    }
+
+    public void setAdminReply(String adminReply) {
+        this.adminReply = adminReply;
+    }
+
+    public LocalDateTime getAdminReplyDate() {
+        return adminReplyDate;
+    }
+
+    public void setAdminReplyDate(LocalDateTime adminReplyDate) {
+        this.adminReplyDate = adminReplyDate;
+    }
 }

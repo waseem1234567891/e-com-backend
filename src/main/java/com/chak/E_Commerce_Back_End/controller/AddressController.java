@@ -23,10 +23,10 @@ public class AddressController {
         return addressService.getAddressesByUserId(userId);
     }
 
-    @PostMapping
-    public ResponseEntity<?> addUserAdress(@RequestBody AddressDTO addressDTO)
+    @PostMapping("/{userId}")
+    public ResponseEntity<?> addUserAdress(@PathVariable Long userId,@RequestBody AddressDTO addressDTO)
     {
-        Address address = addressService.addUserAddress(addressDTO);
+        Address address = addressService.addUserAddress(userId,addressDTO);
         return  ResponseEntity.status(HttpStatus.CREATED).body(address);
     }
     @DeleteMapping("/{userId}/address/{addressId}")

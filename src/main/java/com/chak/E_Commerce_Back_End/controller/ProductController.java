@@ -1,10 +1,10 @@
 package com.chak.E_Commerce_Back_End.controller;
 
 
-import com.chak.E_Commerce_Back_End.dto.ProductDTO;
+import com.chak.E_Commerce_Back_End.dto.product.ProductDTO;
+import com.chak.E_Commerce_Back_End.dto.product.ProductStockDto;
 import com.chak.E_Commerce_Back_End.model.Product;
 import com.chak.E_Commerce_Back_End.model.ProductCategory;
-import com.chak.E_Commerce_Back_End.repository.ProductRepository;
 import com.chak.E_Commerce_Back_End.service.FileStorageService;
 import com.chak.E_Commerce_Back_End.service.ProductCategoryService;
 import com.chak.E_Commerce_Back_End.service.ProductService;
@@ -12,14 +12,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -119,13 +115,14 @@ private final ObjectMapper objectMapper; // for JSON parsing
             @RequestParam Double price,
             @RequestParam(required = false) MultipartFile image,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(value = "tags", required = false) String tagsJson
+            @RequestParam(value = "tags", required = false) String tagsJson,
+            @RequestParam int stock
     ) throws IOException {
         List<String> tags = tagsJson != null && !tagsJson.isEmpty()
                 ? objectMapper.readValue(tagsJson, List.class)
                 : List.of();
 
-        Product updatedProduct = productService.editProduct(id, name, price, image, categoryId, tags);
+        Product updatedProduct = productService.editProduct(id, name, price, image, categoryId, tags, stock);
         return ResponseEntity.ok(new ProductDTO(updatedProduct));
     }
    //Get product by product name
@@ -139,10 +136,38 @@ private final ObjectMapper objectMapper; // for JSON parsing
     @GetMapping("/{productId}")
     public ResponseEntity<?> getProductByProductId(@PathVariable Long productId)
     {
-        Product product = productService.getProductbyId(productId);
+        ProductDTO product = productService.getProductbyIdAsProductDto(productId);
         return ResponseEntity.ok(product);
     }
 
+    //update stock
+    @PostMapping("/updatestock/{productId}")
+    public ProductDTO updateStock(@PathVariable Long productId,@RequestParam int stock)
+    {
+       return productService.updateStock(productId,stock);
+    }
+
+    //Add more stock
+
+    //update stock
+    @PostMapping("/addstock/{productId}")
+    public ProductDTO addStock(@PathVariable Long productId,@RequestParam int stock)
+    {
+        return productService.addStock(productId,stock);
+    }
+    //Get stock
+    @GetMapping("/stock/{productId}")
+    public int getCurrentStock(@PathVariable Long productId)
+    {
+       return productService.getCurrentStockByProductId(productId);
+    }
+
+    //Get stock
+    @GetMapping("/stock/allproduct")
+    public List<ProductStockDto> getCurrentAllProductStock()
+    {
+        return productService.getAllProductNameAndStock();
+    }
 
 
     }

@@ -9,8 +9,10 @@ import com.chak.E_Commerce_Back_End.model.ConfirmationToken;
 import com.chak.E_Commerce_Back_End.model.PasswordResetToken;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.ConfirmationTokenRepository;
+import com.chak.E_Commerce_Back_End.repository.OrderRepo;
 import com.chak.E_Commerce_Back_End.repository.TokenRepository;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
+import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,11 +24,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +44,11 @@ public class UserService {
 
     @Autowired
     private TokenRepository tokenRepository;
+
+    @Autowired
+    private OrderRepo orderRepo;
+
+
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -79,11 +86,15 @@ public class UserService {
         return savedUser;
     }
 
-
+    @Transactional
     public User loginUser(LoginDTO loginDTO) {
-        return userRepository.findByUsername(loginDTO.getUsername())
+        User loginUser= userRepository.findByUsername(loginDTO.getUsername())
                 .filter(user -> passwordEncoder.matches(loginDTO.getPassword(), user.getPassword()))
                 .orElse(null);
+        loginUser.setLastLogin(LocalDateTime.now());
+        userRepository.save(loginUser);
+        return loginUser;
+
     }
 
 
@@ -226,4 +237,16 @@ public class UserService {
             throw new UsernameNotFoundException("user not exist with id  "+userId);
         }
     }
+
+    public void forgetUserName(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent())
+        {
+            User user = userOpt.get();
+            emailService.sendSimpleEmail(user.getEmail(),"User name","Your user name is "+user.getUsername());
+        }else {
+            throw new UsernameNotFoundException("User name not exist with this email adress "+email);
+        }
+    }
 }
+

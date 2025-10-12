@@ -1,58 +1,29 @@
 package com.chak.E_Commerce_Back_End.dto.order;
 
 import com.chak.E_Commerce_Back_End.model.Order;
-import com.chak.E_Commerce_Back_End.model.OrderItem;
 import com.chak.E_Commerce_Back_End.model.enums.OrderStatus;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
-public class OrderResponseDTO {
+public class CustomOrderDto {
     private Long id;
     private String userName; // 👈 only this, not full User
     private Double totalAmount;
     private OrderStatus status;
     private String paymentStatus;
-    private String shippingAddress;
     private String paymentMethod;
     private LocalDateTime orderDate;
-    private List<OrderItemDTO> items; // optional if you want item info
 
-    public OrderResponseDTO(Order order)
+    public CustomOrderDto(Order order)
     {
         this.id=order.getId();
-        if (order.getUser()!=null)
-        {
-            this.userName=order.getUser().getFirstName()+" "+order.getUser().getLastName();
-        }else {
-            this.userName=order.getGuestName();
-        }
+        this.userName=order.getUser().getFirstName()+" "+order.getUser().getLastName();
         this.totalAmount=order.getTotalAmount();
         this.status=order.getStatus();
         this.paymentStatus=order.getPaymentStatus();
-        this.shippingAddress=order.getShippingAddress();
         this.paymentMethod=order.getPaymentMethod();
         this.orderDate=order.getOrderDate();
-        List<OrderItem> items1 = order.getItems();
-        List<OrderItemDTO> collect = items1.stream().map(OrderItemDTO::new).collect(Collectors.toList());
-        this.items=collect;
 
-    }
-    public OrderResponseDTO()
-    {
-
-    }
-
-    // getters and setters
-
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public Long getId() {
@@ -63,7 +34,13 @@ public class OrderResponseDTO {
         this.id = id;
     }
 
+    public String getUserName() {
+        return userName;
+    }
 
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
     public Double getTotalAmount() {
         return totalAmount;
@@ -89,14 +66,6 @@ public class OrderResponseDTO {
         this.paymentStatus = paymentStatus;
     }
 
-    public String getShippingAddress() {
-        return shippingAddress;
-    }
-
-    public void setShippingAddress(String shippingAddress) {
-        this.shippingAddress = shippingAddress;
-    }
-
     public String getPaymentMethod() {
         return paymentMethod;
     }
@@ -111,13 +80,5 @@ public class OrderResponseDTO {
 
     public void setOrderDate(LocalDateTime orderDate) {
         this.orderDate = orderDate;
-    }
-
-    public List<OrderItemDTO> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItemDTO> items) {
-        this.items = items;
     }
 }

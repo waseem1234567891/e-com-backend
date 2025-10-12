@@ -7,9 +7,11 @@ import com.chak.E_Commerce_Back_End.repository.AddressRepo;
 
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AddressService {
@@ -24,18 +26,23 @@ public class AddressService {
         return adressRepo.findByUserId(userId);
     }
 
-    public Address addUserAddress(AddressDTO addressDTO)
+    public Address addUserAddress(Long userId,AddressDTO addressDTO)
     {
-        User user=userRepository.getReferenceById(addressDTO.getUserId());
-        Address address=new Address();
-        address.setId(addressDTO.getId());
-        address.setCity(addressDTO.getCity());
-        address.setCountry(addressDTO.getCountry());
-        address.setPostalCode(addressDTO.getPostalCode());
-        address.setState(addressDTO.getState());
-        address.setStreet(addressDTO.getStreet());
-        address.setUser(user);
-     return    adressRepo.save(address);
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            Address address = new Address();
+            address.setId(addressDTO.getId());
+            address.setCity(addressDTO.getCity());
+            address.setCountry(addressDTO.getCountry());
+            address.setPostalCode(addressDTO.getPostalCode());
+            address.setState(addressDTO.getState());
+            address.setStreet(addressDTO.getStreet());
+            address.setUser(user);
+            return adressRepo.save(address);
+        }else {
+            throw new UsernameNotFoundException("User not found with id "+userId);
+        }
     }
 
 
@@ -56,10 +63,7 @@ public class AddressService {
         Address address = adressRepo.findById(dto.getId())
                 .orElseThrow(() -> new RuntimeException("Address not found"));
 
-        // Optional: ensure the address belongs to the user
-        if (!address.getUser().getId().equals(dto.getUserId())) {
-            throw new RuntimeException("Unauthorized to edit this address");
-        }
+
 
         // Update fields
         address.setStreet(dto.getStreet());
@@ -77,8 +81,8 @@ public class AddressService {
                 saved.getCity(),
                 saved.getState(),
                 saved.getPostalCode(),
-                saved.getCountry(),
-                saved.getUser().getId()
+                saved.getCountry()
+
         );
 
         return updatedDto;

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -60,6 +62,12 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
+    private LocalDateTime createdAt=LocalDateTime.now();
+
+    private LocalDateTime lastLogin;
+
+
+
 
 
 
@@ -82,7 +90,6 @@ public class User {
     public User(Long id, String status,   String username, String password, String email, String role, List<Order> orders, List<ConfirmationToken> tokens, List<Address> addresses) {
         this.id = id;
         this.status = status;
-
         this.username = username;
         this.password = password;
         this.email = email;
@@ -90,6 +97,24 @@ public class User {
         this.orders = orders;
         this.tokens = tokens;
         this.addresses = addresses;
+    }
+
+    public User(Long id, String status, String firstName, String lastName, String username, String password, String role, String email, List<Order> orders, List<ConfirmationToken> tokens, List<Address> addresses, Set<CartItem> cartItems, List<Review> reviews, LocalDateTime createdAt, LocalDateTime lastLogin) {
+        this.id = id;
+        this.status = status;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.email = email;
+        this.orders = orders;
+        this.tokens = tokens;
+        this.addresses = addresses;
+        this.cartItems = cartItems;
+        this.reviews = reviews;
+        this.createdAt = createdAt;
+        this.lastLogin = lastLogin;
     }
 
     // Getters and Setters
@@ -195,5 +220,21 @@ public class User {
 
     public void setReviews(List<Review> reviews) {
         this.reviews = reviews;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
     }
 }
