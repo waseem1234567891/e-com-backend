@@ -21,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -50,20 +47,20 @@ public class OrderService {
     @Autowired
     private NotificationService notificationService;
 
-    //place an order
     @Transactional
-    public OrderResponseDTO placeOrder(OrderDTO orderDTO)
-    {
+    public OrderResponseDTO placeOrder(OrderDTO orderDTO) {
         System.out.println(orderDTO);
 
-        Order order=new Order();
-        User user=null;
+        Order order = new Order();
+
+        // ✅ Get current user
+        User user = null;
         try {
             user = userService.getCurrentUser();
-        }catch (Exception e)
-        {
-
+        } catch (Exception e) {
+            // ignore (guest checkout)
         }
+
         if (user != null) {
             order.setUser(user);
         } else {
@@ -75,60 +72,72 @@ public class OrderService {
         order.setPaymentMethod(orderDTO.getPaymentMethod());
         order.setPaymentStatus("UnPaid");
         order.setStatus(OrderStatus.PENDING);
-        order.setPaymentMethod(orderDTO.getPaymentMethod());
         order.setOrderDate(LocalDateTime.now());
         order.setShippingAddress(orderDTO.getShippingAddress());
         order.setTotalAmount(orderDTO.getTotalAmount());
-        // Map OrderDTO items to OrderItem entities
-        List<OrderItem> items=orderDTO.getItems().stream().map(dto->{
-            Product product=productService.getProductbyId(dto.getProductId());
-            // Check stock availability
+
+        List<OrderItem> orderItems = new ArrayList<>();
+
+        // ✅ Deduct stock and prepare order items (no history yet)
+        for (OrderItemDTO dto : orderDTO.getItems()) {
+            Product product = productService.getProductbyId(dto.getProductId());
+
+            // Check stock
             if (product.getStock() < dto.getQuantity()) {
                 throw new NotEnoughStock("Not enough stock for product: " + product.getName());
             }
+
             // Deduct stock
-            product.setStock(product.getStock() - dto.getQuantity());
-            productService.addProduct(product); // Save updated stock
-            OrderItem orderItem=new OrderItem();
-            orderItem.setProduct(product);
-            orderItem.setQuantity(dto.getQuantity());
-            orderItem.setOrder(order);
-            return orderItem;
-        }).collect(Collectors.toList());
-            order.setItems(items);
+            int newStock = product.getStock() - dto.getQuantity();
+            product.setStock(newStock);
+            Product updatedProduct = productService.addProduct(product);
+
+            // Create order item
+            OrderItem item = new OrderItem();
+            item.setProduct(updatedProduct);
+            item.setQuantity(dto.getQuantity());
+            item.setOrder(order);
+            orderItems.add(item);
+        }
+
+        order.setItems(orderItems);
+
+        // ✅ Save order first (we need the ID)
         Order savedOrder = orderRepo.save(order);
-        //saving history
-        for (OrderItem item : savedOrder.getItems()) { Product product = item.getProduct();
+
+        // ✅ Now log stock history (with order ID)
+        for (OrderItem item : savedOrder.getItems()) {
+            Product product = item.getProduct();
+
             ProductStockHistory history = new ProductStockHistory();
             history.setProduct(product);
             history.setQuantityChanged(-item.getQuantity());
             history.setStockAfterChange(product.getStock());
             history.setReason("Order Placed - Order ID: " + savedOrder.getId());
+
             productStockHistoryRepo.save(history);
         }
 
-
-
+        // ✅ Notify or email user
         if (user != null) {
-
             emailService.sendOrderEmail(user.getEmail(), order.getId(), order.getStatus(), order.getTotalAmount());
             String username = user.getUsername();
-            String message="Your order #" + savedOrder.getId() + " has been placed!";
+            String message = "Your order #" + savedOrder.getId() + " has been placed!";
+            String link = "http://localhost:3000/order-for-user/" + savedOrder.getId();
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("message", message);
+            payload.put("type", "info");
+            payload.put("link", link);
             notificationService.sendUserNotification(
-                    username,Map.of("message", message, "type", "info")
-
-            );
-            System.out.println("===========myorder========");
+                    username,
+                    payload);
         } else {
             emailService.sendOrderEmail(order.getGuestEmail(), order.getId(), order.getStatus(), order.getTotalAmount());
         }
 
-
-
         return new OrderResponseDTO(savedOrder);
-
-
     }
+
     //Getting Order using pagination
     //Getting Order using pagination + filter + search
     public Page<OrderResponseDTO> getAllOrders(int page, int size, String status, String search) {
@@ -182,13 +191,20 @@ public class OrderService {
         Order order1=order.get();
         OrderStatus orderSOldtatus=order1.getStatus();
         order1.setStatus(newStatus);
-
-        emailService.sendOrderEmail(order1.getUser().getEmail(),order1.getId(),newStatus,order1.getTotalAmount());
-        String message="Your order #" + order1.getId() + "status has been updated from "+orderSOldtatus.name()+" to" +order1.getStatus().name();
-        notificationService.sendUserNotification(
-                order1.getUser().getUsername(),Map.of("message", message, "type", "info")
-
-        );
+        if (order1.getUser()!=null) {
+            emailService.sendOrderEmail(order1.getUser().getEmail(), order1.getId(), newStatus, order1.getTotalAmount());
+            String message = "Your order #" + order1.getId() + " status has been updated from " + orderSOldtatus.name() + " to " + order1.getStatus().name();
+            String link = "http://localhost:3000/" + "order-for-user/" + order1.getId();
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("message", message);
+            payload.put("type", "info");
+            payload.put("link", link);
+            notificationService.sendUserNotification(
+                    order1.getUser().getUsername(), payload );
+        }
+        else {
+            emailService.sendOrderEmail(order1.getGuestEmail(), order1.getId(), newStatus, order1.getTotalAmount());
+        }
         return orderRepo.save(order1);
     }else {
         throw new OrderNotFoundException("Order not found with id "+orderId);
@@ -292,6 +308,16 @@ public class OrderService {
                   // Send cancellation email
                   if (order.getUser() != null) {
                       emailService.sendOrderEmail(order.getUser().getEmail(), order.getId(), order.getStatus(), order.getTotalAmount());
+                      String message="Your order #" + order.getId() +" has been Canceled" ;
+                      String link="http://localhost:3000/"+"order-for-user/"+order.getId();
+                      Map<String, Object> payload = new HashMap<>();
+                      payload.put("message", message);
+                      payload.put("type", "info");
+                      payload.put("link", link);
+                      notificationService.sendUserNotification(
+                              order.getUser().getUsername(),payload
+
+                      );
                   } else {
                       emailService.sendOrderEmail(order.getGuestEmail(), order.getId(), order.getStatus(), order.getTotalAmount());
                   }

@@ -1,10 +1,12 @@
 package com.chak.E_Commerce_Back_End.dto.user;
 
+import com.chak.E_Commerce_Back_End.model.Address;
 import lombok.Data;
 
 @Data
 public class AddressDTO {
     private Long id;           // Optional, needed for edit/delete
+    private Integer houseNumber;
     private String street;
     private String city;
     private String state;
@@ -15,9 +17,19 @@ public class AddressDTO {
 
     public AddressDTO() {
     }
+    public AddressDTO(Address address) {
+        this.id=address.getId();
+        this.houseNumber=address.getHouseNumber();
+        this.street=address.getStreet();
+        this.city=address.getCity();
+        this.state=address.getState();
+        this.postalCode=address.getPostalCode();
+        this.country=address.getCountry();
+    }
 
-    public AddressDTO(Long id, String street, String city, String state, String postalCode, String country) {
+    public AddressDTO(Long id,Integer houseNumber, String street, String city, String state, String postalCode, String country) {
         this.id = id;
+        this.houseNumber=houseNumber;
         this.street = street;
         this.city = city;
         this.state = state;
@@ -82,5 +94,13 @@ public class AddressDTO {
 
     public void setPrimary(boolean primary) {
         this.primary = primary;
+    }
+
+    public Integer getHouseNumber() {
+        return houseNumber;
+    }
+
+    public void setHouseNumber(Integer houseNumber) {
+        this.houseNumber = houseNumber;
     }
 }

@@ -3,6 +3,10 @@ package com.chak.E_Commerce_Back_End.service;
 import com.chak.E_Commerce_Back_End.dto.auth.LoginDTO;
 import com.chak.E_Commerce_Back_End.dto.auth.ProfileDto;
 import com.chak.E_Commerce_Back_End.dto.auth.UserDTO;
+import com.chak.E_Commerce_Back_End.dto.order.CustomOrderDto;
+import com.chak.E_Commerce_Back_End.dto.order.OrderDTO;
+import com.chak.E_Commerce_Back_End.dto.user.AddressDTO;
+import com.chak.E_Commerce_Back_End.dto.user.UserDetailsDTO;
 import com.chak.E_Commerce_Back_End.dto.user.UserResponseDto;
 import com.chak.E_Commerce_Back_End.dto.user.UserUpdateDto;
 import com.chak.E_Commerce_Back_End.model.ConfirmationToken;
@@ -79,7 +83,7 @@ public class UserService {
         confirmationTokenRepository.save(confirmationToken);
 
         // 5. Send confirmation email
-        String link = "http://localhost:8989/user/confirm?token=" + token;
+        String link = "http://localhost:8989/auth/confirm?token=" + token;
         String emailBody = "Click the link to confirm your email: " + link;
         emailService.sendSimpleEmail(savedUser.getEmail(), "Confirm Your Email", emailBody);
 
@@ -136,11 +140,25 @@ public class UserService {
     }
     //Getting All user By pagination
 
-    public Page<UserResponseDto> getAllUserUsingPagination(int page,int size)
+    public Page<UserResponseDto> getAllUserUsingPagination(int page,int size,String search)
     {
         Pageable pageable= PageRequest.of(page,size);
-        return userRepository.findAll(pageable).map(user -> new UserResponseDto(user));
+        Page<User> userPage;
+        if (search != null && !search.trim().isEmpty()) {
+            // Search by username or email (case-insensitive)
+            userPage = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                    search, search, pageable
+            );
+        } else {
+            // No search → return all users
+            userPage = userRepository.findAll(pageable);
+        }
+        return userPage.map(user -> new UserResponseDto(user));
     }
+
+
+
+    //Delete a user
 
     public void deleteUser(Long userId)
     {
@@ -246,6 +264,28 @@ public class UserService {
             emailService.sendSimpleEmail(user.getEmail(),"User name","Your user name is "+user.getUsername());
         }else {
             throw new UsernameNotFoundException("User name not exist with this email adress "+email);
+        }
+    }
+
+    public UserDetailsDTO getUserDetailsByUserId(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent())
+        {
+            User user = userOpt.get();
+            UserDetailsDTO userDetailsDTO=new UserDetailsDTO();
+            userDetailsDTO.setId(user.getId());
+            userDetailsDTO.setFirstName(user.getFirstName());
+            userDetailsDTO.setLastName(user.getLastName());
+            userDetailsDTO.setStatus(user.getStatus());
+            userDetailsDTO.setRole(user.getRole());
+            userDetailsDTO.setEmail(user.getEmail());
+            userDetailsDTO.setCreatedAt(user.getCreatedAt());
+            userDetailsDTO.setLastLogin(user.getLastLogin());
+            userDetailsDTO.setOrders(user.getOrders().stream().map(CustomOrderDto::new).collect(Collectors.toList()));
+            userDetailsDTO.setAddresses(user.getAddresses().stream().map(AddressDTO::new).collect(Collectors.toList()));
+       return userDetailsDTO;
+        }else {
+            throw new UsernameNotFoundException("User not found with id "+userId);
         }
     }
 }

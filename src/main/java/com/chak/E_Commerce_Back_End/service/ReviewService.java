@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,8 @@ public class ReviewService {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private NotificationService notificationService;
 
     public ReviewDTO addReviw(@Valid ReviewRequest request)
     {
@@ -93,7 +96,12 @@ public class ReviewService {
             Review review = reviewOpt.get();
             review.replyToReview(replyText);
             review.setReplyDate(LocalDateTime.now());
-            reviewRepo.save(review);
+            Review save = reviewRepo.save(review);
+            String message="Admin is replied to your Review";
+            Long productId=save.getProduct().getId();
+            String reviewLink="http://localhost:3000/"+"product/"+productId+"?reviewId="+save.getId();
+            notificationService.sendUserNotification(save.getUser().getUsername(), Map.of("message", message, "type", "info","link", reviewLink));
+
         }else {
             throw new ReviewNotFound("Review not found with id "+reviewId);
         }

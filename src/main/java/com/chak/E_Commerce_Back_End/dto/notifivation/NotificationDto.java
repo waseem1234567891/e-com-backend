@@ -26,4 +26,7 @@ public class NotificationDto {
     public void setType(String type) {
         this.type = type;
     }
+
+    public void setId(Long id) {
+    }
 }

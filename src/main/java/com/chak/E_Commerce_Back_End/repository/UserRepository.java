@@ -1,6 +1,8 @@
 package com.chak.E_Commerce_Back_End.repository;
 
 import com.chak.E_Commerce_Back_End.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,4 +28,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT FUNCTION('DATE', u.lastLogin) AS date, COUNT(u) AS logins " +
             "FROM User u WHERE u.lastLogin >= :startDate GROUP BY FUNCTION('DATE', u.lastLogin) ORDER BY date")
     List<Object[]> getLoginsByDate(@Param("startDate") LocalDateTime startDate);
+
+    Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email, Pageable pageable);
 }

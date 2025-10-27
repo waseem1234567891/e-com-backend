@@ -45,7 +45,7 @@ public class User {
     private String role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonIgnore
+   // @JsonIgnore
     private List<Order> orders;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -65,6 +65,9 @@ public class User {
     private LocalDateTime createdAt=LocalDateTime.now();
 
     private LocalDateTime lastLogin;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NotificationEntity> notificationEntity;
 
 
 
@@ -236,5 +239,13 @@ public class User {
 
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public List<NotificationEntity> getNotificationEntity() {
+        return notificationEntity;
+    }
+
+    public void setNotificationEntity(List<NotificationEntity> notificationEntity) {
+        this.notificationEntity = notificationEntity;
     }
 }

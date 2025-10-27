@@ -1,11 +1,8 @@
 package com.chak.E_Commerce_Back_End.controller;
 
 import com.chak.E_Commerce_Back_End.dto.auth.*;
-import com.chak.E_Commerce_Back_End.dto.user.DashboardResponse;
+import com.chak.E_Commerce_Back_End.dto.user.*;
 import com.chak.E_Commerce_Back_End.dto.auth.UserDTO;
-import com.chak.E_Commerce_Back_End.dto.user.EmailRequest;
-import com.chak.E_Commerce_Back_End.dto.user.UserResponseDto;
-import com.chak.E_Commerce_Back_End.dto.user.UserUpdateDto;
 import com.chak.E_Commerce_Back_End.exception.UserAlreadyExistsException;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
@@ -165,9 +162,9 @@ public ResponseEntity<?> userDashboard(Authentication authentication) {
 
 @GetMapping("/alluser")
 @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserResponseDto>> getAllUserThroughPagination(@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue = "5")int size)
+    public ResponseEntity<Page<UserResponseDto>> getAllUserThroughPagination(@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue = "5")int size,@RequestParam(required = false) String search)
 {
-return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size));
+return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size,search));
 }
 
 
@@ -243,9 +240,9 @@ return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size));
     }
 
     @GetMapping("/user/{userId}")
-    public User getUserDetails(@PathVariable Long userId)
+    public UserDetailsDTO getUserDetails(@PathVariable Long userId)
     {
-      return   userService.getUserByUserId(userId);
+      return   userService.getUserDetailsByUserId(userId);
     }
 
 }

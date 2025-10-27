@@ -45,6 +45,7 @@ private final ObjectMapper objectMapper; // for JSON parsing
             @RequestParam("price") Double price,
             @RequestParam("categoryId") Integer proCatId,
             @RequestParam("image") MultipartFile image,
+            @RequestParam("stock") Integer stock,
             @RequestParam(value = "tags", required = false) String tagsJson
     ) throws JsonProcessingException {
         List<String> tags = tagsJson != null && !tagsJson.isEmpty()
@@ -54,7 +55,7 @@ private final ObjectMapper objectMapper; // for JSON parsing
             String imageUrl = fileStorageService.saveFile(image);
             Optional<ProductCategory> productCategory=productCategoryService.getAllProductCateById(proCatId);
             ProductCategory productCategory1= (ProductCategory) productCategory.get();
-            Product product = new Product(null, name, price,productCategory1, imageUrl);
+            Product product = new Product(null, name, price,productCategory1, imageUrl,stock);
             product.setTags(tags);
             productService.addProduct(product);
 

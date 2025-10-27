@@ -55,12 +55,13 @@ public class Product {
     public Product() {
     }
 
-    public Product(Long id, String name, double price,ProductCategory productCategory, String imagePath) {
+    public Product(Long id, String name, double price,ProductCategory productCategory, String imagePath,Integer stock) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.imagePath = imagePath;
         this.productCategory=productCategory;
+        this.stock=stock;
     }
 
     public void setName(String name) {

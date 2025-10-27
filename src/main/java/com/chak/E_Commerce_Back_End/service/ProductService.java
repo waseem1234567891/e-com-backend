@@ -5,7 +5,9 @@ import com.chak.E_Commerce_Back_End.dto.product.ProductStockDto;
 import com.chak.E_Commerce_Back_End.exception.ProductNotFoundException;
 import com.chak.E_Commerce_Back_End.model.Product;
 import com.chak.E_Commerce_Back_End.model.ProductCategory;
+import com.chak.E_Commerce_Back_End.model.ProductStockHistory;
 import com.chak.E_Commerce_Back_End.repository.ProductRepository;
+import com.chak.E_Commerce_Back_End.repository.ProductStockHistoryRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +28,8 @@ public class ProductService {
     private FileStorageService fileStorageService;
     @Autowired
     private ProductCategoryService productCategoryService;
+    @Autowired
+    private ProductStockHistoryRepo productStockHistoryRepo;
 // Add new product
     public Product addProduct(Product product)
     {
@@ -139,6 +143,13 @@ public class ProductService {
             int newStock= product.getStock()+stock;
             product.setStock(newStock);
             productRepository.save(product);
+            //update stock history
+            ProductStockHistory history = new ProductStockHistory();
+            history.setProduct(product);
+            history.setQuantityChanged(+stock);
+            history.setStockAfterChange(product.getStock());
+            history.setReason("Added " + stock+" more Items to Stock");
+            productStockHistoryRepo.save(history);
             return new ProductDTO(product);
         }else {
             throw new ProductNotFoundException("Product not found with id "+productId);
