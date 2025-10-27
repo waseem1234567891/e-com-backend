@@ -22,7 +22,7 @@ public class HistoryResponseDto {
         this.productId=productStockHistory.getProduct().getId();
         this.productName=productStockHistory.getProduct().getName();
         this.quantityChanged=productStockHistory.getQuantityChanged();
-        this.stockAfterChange=productStockHistory.getQuantityChanged();
+        this.stockAfterChange=productStockHistory.getStockAfterChange();
         this.reason=productStockHistory.getReason();
         this.time=productStockHistory.getChangeTime();
     }

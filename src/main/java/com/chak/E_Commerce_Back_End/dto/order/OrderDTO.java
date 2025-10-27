@@ -1,6 +1,10 @@
 package com.chak.E_Commerce_Back_End.dto.order;
 
+import com.chak.E_Commerce_Back_End.model.Order;
+import com.chak.E_Commerce_Back_End.model.enums.OrderStatus;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrderDTO {
     private String guestName;
@@ -8,7 +12,23 @@ public class OrderDTO {
     private String shippingAddress; // combined string
     private String paymentMethod;
     private List<OrderItemDTO> items;
-    private Double totalAmount; // optional if calculated in backend
+    private Double totalAmount;// optional if calculated in backend
+    private OrderStatus orderStatus;
+
+    public OrderDTO()
+    {}
+    public OrderDTO(Order order)
+    {
+        if(order.getUser()!=null)
+        {
+            this.shippingAddress=order.getShippingAddress();
+            this.paymentMethod=order.getPaymentMethod();
+            this.totalAmount=order.getTotalAmount();
+            this.items=order.getItems().stream().map(OrderItemDTO::new).collect(Collectors.toList());
+            this.orderStatus=order.getStatus();
+
+        }
+    }
 
     public String getGuestName() {
         return guestName;
@@ -58,5 +78,13 @@ public class OrderDTO {
 
     public void setTotalAmount(Double totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
     }
 }

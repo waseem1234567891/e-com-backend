@@ -10,7 +10,7 @@ public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private Integer houseNumber;
     private String street;
     private String city;
     private String state;
@@ -76,5 +76,13 @@ public class Address {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Integer getHouseNumber() {
+        return houseNumber;
+    }
+
+    public void setHouseNumber(Integer houseNumber) {
+        this.houseNumber = houseNumber;
     }
 }

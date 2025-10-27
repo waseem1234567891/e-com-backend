@@ -32,6 +32,7 @@ public class AddressService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             Address address = new Address();
+            address.setHouseNumber(addressDTO.getHouseNumber());
             address.setId(addressDTO.getId());
             address.setCity(addressDTO.getCity());
             address.setCountry(addressDTO.getCountry());
@@ -66,6 +67,7 @@ public class AddressService {
 
 
         // Update fields
+        address.setHouseNumber(dto.getHouseNumber());
         address.setStreet(dto.getStreet());
         address.setCity(dto.getCity());
         address.setState(dto.getState());
@@ -77,6 +79,7 @@ public class AddressService {
         // Convert to DTO to return
         AddressDTO updatedDto = new AddressDTO(
                 saved.getId(),
+                saved.getHouseNumber(),
                 saved.getStreet(),
                 saved.getCity(),
                 saved.getState(),
