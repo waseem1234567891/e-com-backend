@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   mysql:
     image: mysql:8
@@ -8,6 +9,10 @@ services:
       MYSQL_DATABASE: ecommerce
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
 
   app:
     build: .
@@ -18,5 +23,31 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/ecommerce
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+    volumes:
+      - ./uploads:/app/uploads
     depends_on:
       - mysql
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: "C:/Users/Win11 Pro/Desktop/E-Com-FrontEnd"
+    container_name: ecommerce-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://app:8989
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
+    driver: bridge

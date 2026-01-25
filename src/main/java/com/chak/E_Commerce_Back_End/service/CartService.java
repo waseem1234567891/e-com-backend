@@ -27,7 +27,7 @@ public class CartService {
     public void clearCartByUser(User user) {
         cartRepository.deleteByUser(user);
     }
-@Transactional
+    @Transactional
     public void deleteByUserAndProduct_Id(User user, Long productId) {
         cartRepository.deleteByUserAndProduct_Id(user,productId);
     }

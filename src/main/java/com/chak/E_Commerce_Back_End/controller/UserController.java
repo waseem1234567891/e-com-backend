@@ -3,7 +3,11 @@ package com.chak.E_Commerce_Back_End.controller;
 import com.chak.E_Commerce_Back_End.dto.auth.*;
 import com.chak.E_Commerce_Back_End.dto.user.*;
 import com.chak.E_Commerce_Back_End.dto.auth.UserDTO;
+import com.chak.E_Commerce_Back_End.exception.EmailNotVerifiedException;
+import com.chak.E_Commerce_Back_End.exception.PasswordInCorrectException;
 import com.chak.E_Commerce_Back_End.exception.UserAlreadyExistsException;
+import com.chak.E_Commerce_Back_End.exception.UserNotFoundException;
+import com.chak.E_Commerce_Back_End.model.CustomUserDetails;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
 import com.chak.E_Commerce_Back_End.service.ConfirmationTokenService;
@@ -21,12 +25,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -65,71 +72,51 @@ public class UserController {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new UserAlreadyExistsException("Email already registered: " + user.getEmail());
         }
-
-        //user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole("USER");
-       // userRepository.save(user);
         userService.registerUser(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
     // Admin Registration
     @PostMapping("/admin-register")
-    public ResponseEntity<?> adminRegister(@RequestBody User user) {
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username already exists");
+    public ResponseEntity<?> adminRegister(@RequestBody UserDTO user) {
+        Optional<User> byUsername = userRepository.findByUsername(user.getUsername());
+        if (byUsername.isPresent())
+        {
+            throw new UserAlreadyExistsException("user name already exist");
+        }else {
+            User user1=new User();
+            user1.setRole("ADMIN");
+            user1.setUsername(user.getUsername());
+            user1.setPassword(passwordEncoder.encode(user.getPassword()));
+            user1.setEmail(user.getEmail());
+            user1.setFirstName(user.getFirstName());
+            user1.setLastName(user.getLastName());
+            userRepository.save(user1);
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("ADMIN");
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully");
+
+        return ResponseEntity.ok("Admin registered successfully");
     }
 
     //user login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
 
-            User user = userService.loginUser(request);
-            if (user.getRole().equals("USER")&&user.getStatus().equals("ACTIVE")) {
 
-                String token = jwtUtil.generateToken(user.getUsername(), user.getRole(),user.getId());
+      return   userService.loginUser(request);
 
-                return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername(),user.getRole()));
-            }
-            else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Enter UserName and Password");
-            }
 
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
+
     }
+
+
+
 
     //admin loggin
     @PostMapping("/adminlogin")
     public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginDTO request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
-
-            User user = userService.loginUser(request);
-            if (user.getRole().equals("ADMIN")) {
-                String token = jwtUtil.generateToken(user.getUsername(), user.getRole(),user.getId());
-
-                return ResponseEntity.ok(new AuthResponse(token, user.getId(),user.getUsername(),user.getRole()));
-            }else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please Enter Admin Username and Password");
-            }
-
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
+      return userService.loginUser(request);
     }
 
 
@@ -203,7 +190,6 @@ return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size,search)
     }
 
     @PutMapping("/updateprofile/{userId}")
-
     public ResponseEntity<User> updateProfile(@PathVariable Long userId, @RequestBody ProfileDto profileDto)
     {
 
@@ -240,9 +226,49 @@ return ResponseEntity.ok(userService.getAllUserUsingPagination(page,size,search)
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserDetailsDTO getUserDetails(@PathVariable Long userId)
     {
       return   userService.getUserDetailsByUserId(userId);
+    }
+
+    //check username available
+    @GetMapping("/check-username")
+    public ResponseEntity<?> checkUsername(@RequestParam String username) {
+
+        if (!userRepository.findByUsername(username).isPresent()) {
+            return ResponseEntity.ok(Map.of(
+                    "available", true
+            ));
+        }
+
+        List<String> suggestions = generateUsernameSuggestions(username);
+
+        return ResponseEntity.ok(Map.of(
+                "available", false,
+                "suggestions", suggestions
+        ));
+    }
+
+
+    private List<String> generateUsernameSuggestions(String baseUsername) {
+        List<String> suggestions = new ArrayList<>();
+
+        for (int i = 1; i <= 10; i++) {
+            String candidate = baseUsername + i;
+            if (!userRepository.findByUsername(candidate).isPresent()) {
+                suggestions.add(candidate);
+            }
+        }
+
+        // Add random option if still not enough
+        if (suggestions.size() < 5) {
+            suggestions.add(
+                    baseUsername + "_" + UUID.randomUUID().toString().substring(0, 4)
+            );
+        }
+
+        return suggestions;
     }
 
 }

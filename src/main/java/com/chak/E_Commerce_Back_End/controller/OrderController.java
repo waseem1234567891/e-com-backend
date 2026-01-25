@@ -4,12 +4,14 @@ import com.chak.E_Commerce_Back_End.dto.order.CustomOrderDto;
 import com.chak.E_Commerce_Back_End.dto.order.OrderDTO;
 import com.chak.E_Commerce_Back_End.dto.order.StatusUpdateRequest;
 import com.chak.E_Commerce_Back_End.dto.order.OrderResponseDTO;
+import com.chak.E_Commerce_Back_End.model.CustomUserDetails;
 import com.chak.E_Commerce_Back_End.model.Order;
 import com.chak.E_Commerce_Back_End.model.enums.OrderStatus;
 import com.chak.E_Commerce_Back_End.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -75,9 +77,25 @@ private OrderService orderService;
     @DeleteMapping("/{orderId}")
     public ResponseEntity<OrderResponseDTO> deleteOrderByOrderId(@PathVariable Long orderId)
     {
-        Order order = orderService.cancelAnOrder(orderId);
+        CustomUserDetails userDetails =
+                (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long loggedInUserId = userDetails.getId();
+
+        Order order = orderService.cancelAnOrder(orderId,loggedInUserId);
 
         return ResponseEntity.ok(new OrderResponseDTO(order));
+    }
+
+    @GetMapping("my-orders")
+    public ResponseEntity<?> getMyOrders()
+    {
+        CustomUserDetails userDetails =
+                (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        List<OrderResponseDTO> orders = orderService.getOrderByUserId(userDetails.getId());
+        return ResponseEntity.ok(orders);
+
     }
 
 
