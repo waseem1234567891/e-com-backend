@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -277,12 +278,16 @@ public class OrderService {
     }
     // Cancel an order (soft cancel instead of delete)
     @Transactional
-    public Order cancelAnOrder(Long orderId) {
+    public Order cancelAnOrder(Long orderId,Long userId) {
         Optional<Order> orderOptional = orderRepo.findById(orderId);
         if (orderOptional.isPresent())
         {
             // Prevent double cancellation
             Order order=orderOptional.get();
+            if(!order.getUser().getId().equals(userId))
+            {
+                throw new AccessDeniedException("You are not authorized to cancel this order.");
+            }
             if (order.getStatus() == OrderStatus.CANCELLED) {
                 throw new OrderAlreadyCancelled("Order Already Cancelled with Id: "+orderId);
             }

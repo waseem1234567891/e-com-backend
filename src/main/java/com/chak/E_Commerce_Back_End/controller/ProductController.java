@@ -6,6 +6,7 @@ import com.chak.E_Commerce_Back_End.dto.product.ProductStockDto;
 import com.chak.E_Commerce_Back_End.model.Product;
 import com.chak.E_Commerce_Back_End.model.ProductCategory;
 import com.chak.E_Commerce_Back_End.service.FileStorageService;
+import com.chak.E_Commerce_Back_End.service.FileStorageService1;
 import com.chak.E_Commerce_Back_End.service.ProductCategoryService;
 import com.chak.E_Commerce_Back_End.service.ProductService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,6 +30,9 @@ public class ProductController {
 private ProductService productService;
 @Autowired
 private FileStorageService fileStorageService;
+
+    @Autowired
+    private FileStorageService1 fileStorageService1;
 @Autowired
 private ProductCategoryService productCategoryService;
 

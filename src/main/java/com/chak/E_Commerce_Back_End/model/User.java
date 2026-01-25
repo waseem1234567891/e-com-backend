@@ -23,7 +23,7 @@ public class User {
     private Long id;
 
     @Column(nullable = false)
-    private String status = "ACTIVE";
+    private String status = "PENDING"; // default
 
     @Column(nullable = false)
     private String firstName; // ✅ New field

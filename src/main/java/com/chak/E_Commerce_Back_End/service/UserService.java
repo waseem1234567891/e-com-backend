@@ -1,5 +1,6 @@
 package com.chak.E_Commerce_Back_End.service;
 
+import com.chak.E_Commerce_Back_End.dto.auth.AuthResponse;
 import com.chak.E_Commerce_Back_End.dto.auth.LoginDTO;
 import com.chak.E_Commerce_Back_End.dto.auth.ProfileDto;
 import com.chak.E_Commerce_Back_End.dto.auth.UserDTO;
@@ -9,19 +10,30 @@ import com.chak.E_Commerce_Back_End.dto.user.AddressDTO;
 import com.chak.E_Commerce_Back_End.dto.user.UserDetailsDTO;
 import com.chak.E_Commerce_Back_End.dto.user.UserResponseDto;
 import com.chak.E_Commerce_Back_End.dto.user.UserUpdateDto;
+import com.chak.E_Commerce_Back_End.exception.EmailNotVerifiedException;
+import com.chak.E_Commerce_Back_End.exception.PasswordInCorrectException;
+import com.chak.E_Commerce_Back_End.exception.UserAlreadyExistsException;
+import com.chak.E_Commerce_Back_End.exception.UserNotFoundException;
 import com.chak.E_Commerce_Back_End.model.ConfirmationToken;
+import com.chak.E_Commerce_Back_End.model.CustomUserDetails;
 import com.chak.E_Commerce_Back_End.model.PasswordResetToken;
 import com.chak.E_Commerce_Back_End.model.User;
+import com.chak.E_Commerce_Back_End.model.enums.UserStatus;
 import com.chak.E_Commerce_Back_End.repository.ConfirmationTokenRepository;
 import com.chak.E_Commerce_Back_End.repository.OrderRepo;
 import com.chak.E_Commerce_Back_End.repository.TokenRepository;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
+import com.chak.E_Commerce_Back_End.util.JwtUtil;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,11 +64,28 @@ public class UserService {
     @Autowired
     private OrderRepo orderRepo;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
 
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-    public User registerUser(UserDTO userDTO) {
+     //register a new User
+     @Transactional
+    public User registerUser(@Valid UserDTO userDTO) {
+        //check Email already exists
+        Optional<User> excistedUser = userRepository.findByEmail(userDTO.getEmail());
+        if (excistedUser.isPresent())
+        {
+            throw new UserAlreadyExistsException("This Email Address is Already Registered");
+        }
+        //check if UserName already exists
+         if (userRepository.findByUsername(userDTO.getUsername()).isPresent()) {
+             throw new UserAlreadyExistsException("Username already exists");
+         }
         // 1. Create new user
         User user = new User();
         user.setFirstName(userDTO.getFirstName());
@@ -91,18 +120,52 @@ public class UserService {
     }
 
     @Transactional
-    public User loginUser(LoginDTO loginDTO) {
-        User loginUser= userRepository.findByUsername(loginDTO.getUsername())
-                .filter(user -> passwordEncoder.matches(loginDTO.getPassword(), user.getPassword()))
-                .orElse(null);
-        loginUser.setLastLogin(LocalDateTime.now());
-        userRepository.save(loginUser);
-        return loginUser;
+    public ResponseEntity<?> loginUser(LoginDTO loginDTO) {
+        Optional<User> userOpt = userRepository.findByUsername(loginDTO.getUsername());
 
+        if (userOpt.isEmpty()) {
+            // no such username → invalid credentials
+            throw new UserNotFoundException("User Name does not exists");
+        }
+
+        User user = userOpt.get();
+
+        // ✅ handle email verification first
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())&&!"INACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new EmailNotVerifiedException("Please verify your email before logging in.");
+        }
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginDTO.getUsername(), loginDTO.getPassword()
+                    )
+            );
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+            String token = jwtUtil.generateToken(
+                    userDetails.getUsername(),
+                    userDetails.getRole(),
+                    userDetails.getId()
+            );
+
+            // optionally update last login time
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+
+            return ResponseEntity.ok(
+                    new AuthResponse(token, userDetails.getId(),
+                            userDetails.getUsername(), userDetails.getRole())
+            );
+
+        } catch (BadCredentialsException e) {
+            throw new PasswordInCorrectException("Wrong Password");
+        }
     }
 
 
-
+    // get current logged in user
     public User getCurrentUser()
     {
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
@@ -121,7 +184,7 @@ public class UserService {
         }
         return userRepository.findByUsername(userName).orElseThrow(()->new RuntimeException("user not found"));
     }
-
+// getting all register users
     public List<UserResponseDto> getAllRegisterUsers() {
 
         List<User> users = userRepository.findAll();
@@ -281,6 +344,7 @@ public class UserService {
             userDetailsDTO.setEmail(user.getEmail());
             userDetailsDTO.setCreatedAt(user.getCreatedAt());
             userDetailsDTO.setLastLogin(user.getLastLogin());
+            userDetailsDTO.setUsername(user.getUsername());
             userDetailsDTO.setOrders(user.getOrders().stream().map(CustomOrderDto::new).collect(Collectors.toList()));
             userDetailsDTO.setAddresses(user.getAddresses().stream().map(AddressDTO::new).collect(Collectors.toList()));
        return userDetailsDTO;
@@ -288,5 +352,7 @@ public class UserService {
             throw new UsernameNotFoundException("User not found with id "+userId);
         }
     }
+
+
 }
 
