@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8
     container_name: mysql-db
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ecommerce
@@ -15,16 +14,13 @@ services:
       - app-network
 
   app:
-    build: .
+    image: ecommerce-backend:latest   # Jenkins builds this
     container_name: ecommerce-app
+    restart: always
     ports:
       - "8989:8989"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/ecommerce
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
+      - SPRING_PROFILES_ACTIVE=docker
     volumes:
       - ./uploads:/app/uploads
     depends_on:
@@ -36,6 +32,7 @@ services:
     build:
       context: "C:/Users/Win11 Pro/Desktop/E-Com-FrontEnd"
     container_name: ecommerce-frontend
+    restart: always
     ports:
       - "3000:80"
     environment:
