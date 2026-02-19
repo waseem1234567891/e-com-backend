@@ -1,11 +1,11 @@
 services:
   mysql:
     image: mysql:8
-    container_name: mysql-db
+    container_name: mysql-db-1
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ecommerce
+      MYSQL_DATABASE: afnandb
     ports:
       - "3306:3306"
     volumes:

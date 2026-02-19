@@ -2,6 +2,7 @@ package com.chak.E_Commerce_Back_End.controller;
 
 import com.chak.E_Commerce_Back_End.dto.cart.CartItemDto;
 import com.chak.E_Commerce_Back_End.dto.cart.CartResponseDto;
+import com.chak.E_Commerce_Back_End.dto.cart.UpdateQuantityRequest;
 import com.chak.E_Commerce_Back_End.model.CartItem;
 import com.chak.E_Commerce_Back_End.model.Product;
 import com.chak.E_Commerce_Back_End.model.User;
@@ -49,49 +50,35 @@ public class CartController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addToCart(@RequestBody CartItemDto item) {
-        CartItem cartItem=new CartItem();
-        User user=userService.getUserByUserId(item.getUserId());
-        Product product=productService.getProductbyId(item.getProductId());
-        CartItem existing = cartService.getCartItemsByUserId(user).stream()
-                .filter(ci -> ci.getProduct().getId().equals(item.getProductId()))
-                .findFirst().orElse(null);
-
-        if (existing != null) {
-            existing.setQuantity(existing.getQuantity() + item.getQuantity());
-            cartService.addItemToCart(existing);
-        } else {
-            cartItem.setUser(user);
-            cartItem.setProduct(product);
-            cartItem.setQuantity(item.getQuantity());
-
-            cartService.addItemToCart(cartItem);
-        }
-
-        return ResponseEntity.ok("Product is added");
+        cartService.addToCart( item.getProductId(), item.getQuantity());
+        return ResponseEntity.ok("Product added to cart");
     }
 
     @GetMapping
     public ResponseEntity<?> getCart() {
-        User user = userService.getCurrentUser();
-        if (user==null)
-        {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-        return ResponseEntity.ok(toResponseDto(cartService.getCartItemsByUserId(user)));
-        // return ResponseEntity.ok(cartService.getCartItemsByUserId(user));
+        return ResponseEntity.ok(cartService.getCurrentUserCart());
     }
 
     @DeleteMapping("/clear")
     public ResponseEntity<?> clearCart() {
-        User user = userService.getCurrentUser();
-        cartService.clearCartByUser(user);
+        cartService.clearCurrentUserCart();
         return ResponseEntity.ok(Collections.emptyList());
     }
 
     @DeleteMapping("/removeItem/{productId}")
     public ResponseEntity<?> removeItem(@PathVariable Long productId) {
-        User user = userService.getCurrentUser();
-        cartService.deleteByUserAndProduct_Id(user, productId);
-        return ResponseEntity.ok(toResponseDto(cartService.getCartItemsByUserId(user)));
+        return ResponseEntity.ok(
+                cartService.removeItemFromCurrentUserCart(productId)
+        );
+    }
+    @PutMapping("/updateQuantity/{productId}")
+    public ResponseEntity<?> updateQuantity(
+            @PathVariable Long productId,
+            @RequestBody UpdateQuantityRequest request
+    ) {
+        // request should have "quantity" field
+        cartService.updateCartItemQuantity(productId, request.getQuantity());
+        // return updated cart
+        return ResponseEntity.ok(cartService.getCurrentUserCart());
     }
 }

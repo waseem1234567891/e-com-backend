@@ -1,11 +1,13 @@
 package com.chak.E_Commerce_Back_End.service;
 
+import com.chak.E_Commerce_Back_End.exception.EmailAlreadyConfirmedException;
 import com.chak.E_Commerce_Back_End.model.ConfirmationToken;
 import com.chak.E_Commerce_Back_End.model.User;
 import com.chak.E_Commerce_Back_End.repository.ConfirmationTokenRepository;
 import com.chak.E_Commerce_Back_End.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -17,13 +19,13 @@ public class ConfirmationTokenService {
 
     @Autowired
     private UserRepository userRepo;
-
+    @Transactional
     public String confirmToken(String token) {
         ConfirmationToken confirmationToken = tokenRepo.findByToken(token)
                 .orElseThrow(() -> new IllegalStateException("Invalid token"));
 
         if (confirmationToken.getConfirmedAt() != null) {
-            return "Email already confirmed.";
+            throw new EmailAlreadyConfirmedException("Email already confirmed");
         }
 
         if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {

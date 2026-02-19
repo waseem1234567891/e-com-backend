@@ -13,6 +13,17 @@ public class CartItem {
     @ManyToOne
     private User user;
 
+    public CartItem()
+    {
+
+    }
+
+    public CartItem(User user, Product product, int quantity) {
+        this.user=user;
+        this.product=product;
+        this.quantity=quantity;
+    }
+
     public Long getId() {
         return id;
     }
