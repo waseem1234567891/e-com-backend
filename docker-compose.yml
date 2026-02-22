@@ -1,50 +1,106 @@
-services:
-  mysql:
-    image: mysql:8
-    container_name: mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: afnandb
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - app-network
+  pipeline {
+    agent any
 
-  app:
-    image: ecommerce-backend:latest   # Jenkins builds this
-    container_name: ecommerce-app
-    restart: always
-    ports:
-      - "8989:8989"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    volumes:
-      - ./uploads:/app/uploads
-    depends_on:
-      - mysql
-    networks:
-      - app-network
+    tools {
+    maven 'MAVEN_HOME'
+    jdk 'JAVA_HOME'
+    }
 
-  frontend:
-    build:
-      context: "C:/Users/Win11 Pro/Desktop/E-Com-FrontEnd"
-    container_name: ecommerce-frontend
-    restart: always
-    ports:
-      - "3000:80"
-    environment:
-      - REACT_APP_API_URL=http://app:8989
-    depends_on:
-      - app
-    networks:
-      - app-network
+    environment {
+    BACKEND_IMAGE = "ecommerce-backend"
+    FRONTEND_IMAGE = "ecommerce-frontend"
+    }
 
-volumes:
-  mysql_data:
+    stages {
+    
+    // =========================
+    // Checkout Backend
+    // =========================
+    stage('Checkout Backend') {
+    steps {
+    dir('backend') {
+  git branch: 'main',
+                url: 'https://github.com/waseem1234567891/e-com-backend.git'
+  }
+  }
+  }
 
-networks:
-  app-network:
-    driver: bridge
+    // =========================
+    // Checkout Frontend
+    // =========================
+    stage('Checkout Frontend') {
+    steps {
+    dir('frontend') {
+  git branch: 'main',
+                url: 'https://github.com/YOUR_USERNAME/e-com-frontend.git'
+  }
+  }
+  }
+
+    // =========================
+    // Build Backend
+    // =========================
+    stage('Build Backend') {
+    steps {
+    dir('backend') {
+    bat 'mvn clean package -DskipTests'
+  }
+  }
+  }
+
+    // =========================
+    // Build Backend Image
+    // =========================
+    stage('Docker Build Backend') {
+    steps {
+    script {
+    def tag = env.BUILD_NUMBER
+    dir('backend') {
+    bat """
+    docker build -t %BACKEND_IMAGE%:${tag} .
+    docker tag %BACKEND_IMAGE%:${tag} %BACKEND_IMAGE%:latest
+    """
+                    }
+                }
+            }
+        }
+
+        // =========================
+        // Build Frontend Image
+        // =========================
+        stage('Docker Build Frontend') {
+            steps {
+                script {
+                    def tag = env.BUILD_NUMBER
+                    dir('frontend') {
+                        bat """
+    docker build -t %FRONTEND_IMAGE%:${tag} .
+    docker tag %FRONTEND_IMAGE%:${tag} %FRONTEND_IMAGE%:latest
+    """
+                    }
+                }
+            }
+        }
+
+        // =========================
+        // Deploy
+        // =========================
+        stage('Deploy with Docker Compose') {
+            steps {
+                bat """
+    docker compose down
+    docker compose up -d
+    """
+  }
+  }
+  }
+
+    post {
+    success {
+    echo 'SUCCESS ✔ Backend + Frontend deployed!'
+  }
+    failure {
+    echo 'FAILED ❌ Pipeline failed.'
+  }
+  }
+  }
