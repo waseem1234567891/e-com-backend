@@ -2,84 +2,102 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME'     // Configure in Jenkins Global Tools
-        jdk 'JAVA_HOME'       // Configure in Jenkins Global Tools (JDK 17+)
+        maven 'MAVEN_HOME'
+        jdk 'JAVA_HOME'
     }
 
     environment {
-        IMAGE_NAME = "ecommerce-backend"
+        BACKEND_IMAGE = "ecommerce-backend"
+        FRONTEND_IMAGE = "ecommerce-frontend"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        // =========================
+        // Checkout Backend
+        // =========================
+        stage('Checkout Backend') {
             steps {
-                git branch: 'main', url: 'https://github.com/waseem1234567891/e-com-backend.git'
-            }
-        }
-
-        stage('Build Project') {
-            steps {
-                echo "Building Spring Boot application..."
-                bat 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                echo "Running tests..."
-                bat 'mvn test || exit 0'
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
+                dir('backend') {
+                    git branch: 'main',
+                        url: 'https://github.com/waseem1234567891/e-com-backend.git'
                 }
             }
         }
 
-        stage('Archive JAR') {
+        // =========================
+        // Checkout Frontend
+        // =========================
+        stage('Checkout Frontend') {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                dir('frontend') {
+                    git branch: 'main',
+                        url: 'https://github.com/waseem1234567891/E-Com-FrontEnd.git'
+                }
             }
         }
 
-        stage('Build Docker Image') {
-            when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+        // =========================
+        // Build Backend
+        // =========================
+        stage('Build Backend') {
+            steps {
+                dir('backend') {
+                    bat 'mvn clean package -DskipTests'
+                }
             }
+        }
+
+        // =========================
+        // Build Backend Image
+        // =========================
+        stage('Docker Build Backend') {
             steps {
                 script {
                     def tag = env.BUILD_NUMBER
-
-                    echo "Building Docker image with tag ${tag}"
-
-                    bat """
-                        docker build -t %IMAGE_NAME%:${tag} .
-                        docker tag %IMAGE_NAME%:${tag} %IMAGE_NAME%:latest
-                    """
+                    dir('backend') {
+                        bat """
+                        docker build -t %BACKEND_IMAGE%:${tag} .
+                        docker tag %BACKEND_IMAGE%:${tag} %BACKEND_IMAGE%:latest
+                        """
+                    }
                 }
             }
         }
 
+        // =========================
+        // Build Frontend Image
+        // =========================
+        stage('Docker Build Frontend') {
+            steps {
+                script {
+                    def tag = env.BUILD_NUMBER
+                    dir('frontend') {
+                        bat """
+                        docker build -t %FRONTEND_IMAGE%:${tag} .
+                        docker tag %FRONTEND_IMAGE%:${tag} %FRONTEND_IMAGE%:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        // =========================
+        // Deploy
+        // =========================
         stage('Deploy with Docker Compose') {
             steps {
-                echo "Deploying containers..."
-
                 bat """
                     docker compose down
                     docker compose up -d
                 """
             }
         }
-
     }
 
     post {
         success {
-            echo 'SUCCESS ✔ Build + Docker image + deployment done!'
-        }
-        unstable {
-            echo 'UNSTABLE ⚠ Tests had issues.'
+            echo 'SUCCESS ✔ Backend + Frontend deployed!'
         }
         failure {
             echo 'FAILED ❌ Pipeline failed.'
