@@ -1,106 +1,57 @@
-  pipeline {
-    agent any
+version: "3.9"
 
-    tools {
-    maven 'MAVEN_HOME'
-    jdk 'JAVA_HOME'
-    }
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: afnandb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-    environment {
-    BACKEND_IMAGE = "ecommerce-backend"
-    FRONTEND_IMAGE = "ecommerce-frontend"
-    }
+  app:
+    image: ecommerce-backend:latest
+    container_name: ecommerce-app
+    restart: always
+    ports:
+      - "8989:8989"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
 
-    stages {
-    
-    // =========================
-    // Checkout Backend
-    // =========================
-    stage('Checkout Backend') {
-    steps {
-    dir('backend') {
-  git branch: 'main',
-                url: 'https://github.com/waseem1234567891/e-com-backend.git'
-  }
-  }
-  }
+  frontend:
+    image: ecommerce-frontend:latest
+    container_name: ecommerce-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://app:8989
+    depends_on:
+      - app
+    networks:
+      - app-network
 
-    // =========================
-    // Checkout Frontend
-    // =========================
-    stage('Checkout Frontend') {
-    steps {
-    dir('frontend') {
-  git branch: 'main',
-                url: 'https://github.com/YOUR_USERNAME/e-com-frontend.git'
-  }
-  }
-  }
+volumes:
+  mysql_data:
 
-    // =========================
-    // Build Backend
-    // =========================
-    stage('Build Backend') {
-    steps {
-    dir('backend') {
-    bat 'mvn clean package -DskipTests'
-  }
-  }
-  }
-
-    // =========================
-    // Build Backend Image
-    // =========================
-    stage('Docker Build Backend') {
-    steps {
-    script {
-    def tag = env.BUILD_NUMBER
-    dir('backend') {
-    bat """
-    docker build -t %BACKEND_IMAGE%:${tag} .
-    docker tag %BACKEND_IMAGE%:${tag} %BACKEND_IMAGE%:latest
-    """
-                    }
-                }
-            }
-        }
-
-        // =========================
-        // Build Frontend Image
-        // =========================
-        stage('Docker Build Frontend') {
-            steps {
-                script {
-                    def tag = env.BUILD_NUMBER
-                    dir('frontend') {
-                        bat """
-    docker build -t %FRONTEND_IMAGE%:${tag} .
-    docker tag %FRONTEND_IMAGE%:${tag} %FRONTEND_IMAGE%:latest
-    """
-                    }
-                }
-            }
-        }
-
-        // =========================
-        // Deploy
-        // =========================
-        stage('Deploy with Docker Compose') {
-            steps {
-                bat """
-    docker compose down
-    docker compose up -d
-    """
-  }
-  }
-  }
-
-    post {
-    success {
-    echo 'SUCCESS ✔ Backend + Frontend deployed!'
-  }
-    failure {
-    echo 'FAILED ❌ Pipeline failed.'
-  }
-  }
-  }
+networks:
+  app-network:
+    driver: bridge
